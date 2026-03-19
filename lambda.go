@@ -2,9 +2,7 @@ package slackbot
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -29,12 +27,6 @@ func (r *LambdaRouter) Handle(ctx context.Context, request events.APIGatewayProx
 		return r.EventHandler(ctx, request)
 	} else if strings.HasSuffix(request.Path, "interaction") {
 		return r.InteractionHandler(ctx, request)
-	} else {
-		raw, err := url.QueryUnescape(request.Body)
-		if err != nil {
-			return NewResponse(http.StatusOK), fmt.Errorf("failed to unescape payload: %w", err)
-		}
-		fmt.Println(raw)
 	}
 	return NewResponse(http.StatusOK), nil
 }

@@ -69,7 +69,6 @@ func (ih *InteractionHandler) Handle(ctx context.Context, request events.APIGate
 		return NewResponse(http.StatusOK), fmt.Errorf("failed to unescape payload: %w", err)
 	}
 	raw = strings.Replace(raw, "payload=", "", 1)
-	fmt.Println(raw)
 	var payload slack.InteractionCallback
 	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
 		return NewResponse(http.StatusOK), fmt.Errorf("failed to unmarshal payload: %w", err)
