@@ -1,0 +1,11 @@
+{
+  "name": "slackbot-lambda",
+  "version": "0.1.0",
+  "description": "Claude Code plugin for building Slack Bots on AWS Lambda with github.com/kazz187/slackbot-lambda",
+  "author": {
+    "name": "kazz187"
+  },
+  "repository": "https://github.com/kazz187/slackbot-lambda",
+  "license": "MIT",
+  "keywords": ["slack", "lambda", "go", "aws", "slackbot"]
+}

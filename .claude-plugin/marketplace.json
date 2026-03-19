@@ -1,0 +1,13 @@
+{
+  "name": "slackbot-lambda",
+  "owner": {
+    "name": "kazz187"
+  },
+  "plugins": [
+    {
+      "name": "slackbot-lambda",
+      "source": ".",
+      "description": "Claude Code plugin for building Slack Bots on AWS Lambda with github.com/kazz187/slackbot-lambda"
+    }
+  ]
+}
