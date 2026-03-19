@@ -20,8 +20,7 @@ type EventHandler struct {
 type EventHandlerFunc[T any] func(ctx context.Context, ev T) error
 
 func RegisterHandler[T any](eh *EventHandler, handler EventHandlerFunc[T]) {
-	var zero T
-	eventType := reflect.TypeOf(&zero).Elem()
+	eventType := reflect.TypeFor[T]()
 	eh.callbackEvent.handlers[eventType] = handler
 }
 
