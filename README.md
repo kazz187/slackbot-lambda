@@ -8,6 +8,7 @@ API Gateway + Lambda 構成における Slack Event / Interaction の受信・�
 
 - **Event Handler** — ジェネリクスによる型安全な Slack Event ルーティング
 - **Interaction Handler** — BlockActions / ViewSubmission 等の Interaction ルーティング
+- **Kingpin Handler** — app_mention メッセージを CLI コマンドとしてパース・ディスパッチ
 - **Lambda Router** — パスベースで Event / Interaction を振り分け
 - **Slack Signature Verification** — リクエスト署名検証 (Lambda / HTTP ミドルウェア両対応)
 - **SSM Parameter Store Loader** — シークレットの遅延読み込み・キャッシュ
@@ -115,7 +116,47 @@ func setupInteractionHandler() *slackbot.InteractionHandler {
 }
 ```
 
-### 4. Lambda Router で起動する
+### 4. Kingpin Handler でコマンドを定義する (オプション)
+
+`@bot help` や `@bot ask ...` のように、app_mention メッセージを CLI コマンドとしてパースできます。
+kingpin の `Command` / `Flag` / `Arg` がそのまま使えます。
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/slack-go/slack"
+	slackbot "github.com/kazz187/slackbot-lambda"
+)
+
+// Command インターフェースを実装
+type AskCommand struct {
+	question *string
+}
+
+func (c *AskCommand) Register(app *kingpin.Application) {
+	cmd := app.Command("ask", "ドキュメントに質問する")
+	c.question = cmd.Arg("question", "質問内容").Required().String()
+	cmd.Action(func(pc *kingpin.ParseContext) error {
+		fmt.Println("Question:", *c.question)
+		return nil
+	})
+}
+
+func setupKingpinHandler(slackCli *slack.Client, eh *slackbot.EventHandler) {
+	kh := slackbot.NewKingpinHandler(slackCli, "mybot", "My Slack Bot")
+	kh.AddCommand(&AskCommand{})
+
+	// EventHandler に登録
+	slackbot.RegisterHandler(eh, kh.HandleAppMention)
+}
+```
+
+### 5. Lambda Router で起動する
 
 Event と Interaction のハンドラーを Lambda Router にまとめ、API Gateway からのリクエストをパスで振り分けます。
 

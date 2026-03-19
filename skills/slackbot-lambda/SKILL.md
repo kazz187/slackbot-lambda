@@ -90,6 +90,55 @@ resp, err := ih.Handle(ctx, apiGatewayRequest)
 - `slack.InteractionTypeViewSubmission` — モーダル送信
 - `slack.InteractionTypeViewClosed` — モーダルクローズ
 
+### KingpinHandler — app_mention をコマンドとしてパース
+
+kingpin を使って `@bot <command> [args] [flags]` 形式のメンションをコマンドとしてパース・ディスパッチする。
+ヘルプやエラーメッセージは自動的に Slack スレッドにコードブロックとして返信される。
+
+```go
+// 1. Command インターフェースを実装
+type AskCommand struct {
+    question *string
+    maxResults *int
+}
+
+func (c *AskCommand) Register(app *kingpin.Application) {
+    cmd := app.Command("ask", "ドキュメントに質問する")
+    c.question = cmd.Arg("question", "質問内容").Required().String()
+    c.maxResults = cmd.Flag("max-results", "最大件数").Default("5").Int()
+    cmd.Action(func(pc *kingpin.ParseContext) error {
+        // *c.question, *c.maxResults でパース済みの値にアクセス
+        return nil
+    })
+}
+
+// 2. KingpinHandler を作成してコマンドを登録
+slackCli := slack.New(botToken)
+kh := slackbot.NewKingpinHandler(slackCli, "mybot", "My Bot")
+kh.AddCommand(&AskCommand{})
+
+// 3. EventHandler に登録
+slackbot.RegisterHandler(eh, kh.HandleAppMention)
+```
+
+**インターフェース:**
+```go
+type Command interface {
+    Register(app *kingpin.Application)
+}
+```
+
+**主要メソッド:**
+- `NewKingpinHandler(slackCli *slack.Client, commandName, commandDesc string)` — ハンドラー作成
+- `AddCommand(cmd Command)` — コマンド登録
+- `HandleAppMention(ctx context.Context, ev *slackevents.AppMentionEvent) error` — EventHandlerFunc として使用
+
+**動作:**
+1. メンション (`<@U...>`) を除去してコマンド引数に分割
+2. kingpin でパース・ディスパッチ
+3. usage/error 出力は Slack スレッドにコードブロックで返信
+4. `app.Terminate(nil)` 済みのため `os.Exit` しない
+
 ### LambdaRouter — パスベースのルーティング
 
 API Gateway のパスで Event と Interaction を振り分ける。
